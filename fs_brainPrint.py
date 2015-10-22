@@ -126,7 +126,8 @@ def options_parse():
     h_gsmooth    = 'Geometry smoothing iterations (for surfaces), default 0'
     h_tsmooth    = 'Tangential smoothing iterations (for surface mesh improvement), default 3'
     h_skip3d     = 'Skip 3D tet-meshing and computation'
-
+    h_evec       = 'Switch on eigenvector computation (default off, when using this also do --keeptmp --skip3d)'
+    
     parser.add_option('--sid',        dest='sid',        help=h_sid)
     parser.add_option('--sdir',       dest='sdir',       help=h_sdir)
     parser.add_option('--num' ,       dest='num',        help=h_num,     default=50, type='int')
@@ -136,6 +137,7 @@ def options_parse():
     parser.add_option('--tsmooth',    dest='tsmooth',    help=h_tsmooth, default=3, type='int')   
     parser.add_option('--gsmooth',    dest='gsmooth',    help=h_gsmooth, default=0, type='int')   
     parser.add_option('--skip3d',     dest='skip3d',     help=h_skip3d,  default=False, action='store_true')
+    parser.add_option('--evec',       dest='evec',       help=h_evec,    default=False, action='store_true')
 
     (options, args) = parser.parse_args()
     #if len(args) == 0:
@@ -331,7 +333,7 @@ def compute_shapeDNAs(options):
         bcond    = 1 #Neumann (for tet mesh)
         tsmooth  = options.tsmooth
         gsmooth  = options.gsmooth
-        evec     = False
+        evec     = options.evec
         param2d  = None
  
     evmat = []
