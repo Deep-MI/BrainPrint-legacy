@@ -449,9 +449,16 @@ def get_aseg_surf(sdir,sid,asegid,outsurf):
         run_cmd(cmd,'mri_binarize failed.') 
         ptinput = segf
         ptlabel = '1'
-    # fixes combined label
-    cmd ='mri_pretess '+ptinput+' '+ptlabel+' '+norm+' '+segf
-    run_cmd(cmd,'mri_pretess failed.') 
+    # if norm exist, fix label (pretess)
+    if os.path.isfile(norm):
+        cmd ='mri_pretess '+ptinput+' '+ptlabel+' '+norm+' '+segf
+        run_cmd(cmd,'mri_pretess failed.') 
+    else:
+        if not os.path.isfile(segf):
+            # cp segf if not exist yet
+            # (it exists already if we combined labels above)
+            cmd = 'cp '+ptinput+' '+segf
+            run_cmd(cmd,'cp segmentation file failed.') 
     # runs marching cube to extract surface
     cmd ='mri_mc '+segf+' '+ptlabel+' '+segsurf
     run_cmd(cmd,'mri_mc failed?') 
