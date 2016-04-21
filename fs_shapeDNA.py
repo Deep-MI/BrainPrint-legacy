@@ -11,21 +11,16 @@
 #
 
 import warnings
-warnings.filterwarnings('ignore', '.*negative int.*')
 import os
 import sys
 import shlex
 import optparse
-import logging
 import subprocess
 import tempfile
-import shutil
-import time
-import math
-import stat
 import uuid
 import errno
 
+warnings.filterwarnings('ignore', '.*negative int.*')
 os.environ['OMP_NUM_THREADS'] = '1' # setenv OMP_NUM_THREADS 1
 
 HELPTEXT = """
@@ -349,7 +344,6 @@ def options_parse():
     return options
 
 def which(program):
-    import os
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
