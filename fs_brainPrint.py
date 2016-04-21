@@ -11,20 +11,14 @@
 #
 
 import warnings
-warnings.filterwarnings('ignore', '.*negative int.*')
 import os
 import sys
 import shlex
 import optparse
-import logging
 import subprocess
-import tempfile
-import shutil
-import time
-import math
-import stat
-import uuid
 import fs_shapeDNA
+
+warnings.filterwarnings('ignore', '.*negative int.*')
 
 HELPTEXT = """
 
@@ -122,11 +116,11 @@ def options_parse():
     h_num        = 'Number of eigenvalues/vectors to compute (default: 50)'
     h_outdir     = 'Output directory (default: <sdir>/<sid>/surf )'
     h_brainprint = 'Output BrainPrint file (default: <outdir>/<sid>.brainprint_<num>.csv )'
-    h_keeptmp    = 'Keep intermediate surface, tet-mesh and ev files'
-    h_gsmooth    = 'Geometry smoothing iterations (for surfaces), default 0'
-    h_tsmooth    = 'Tangential smoothing iterations (for surface mesh improvement), default 3'
-    h_skip3d     = 'Skip 3D tet-meshing and computation'
-    h_evec       = 'Switch on eigenvector computation (default off, when using this also do --keeptmp --skip3d)'
+    h_keeptmp    = 'Keep intermediate surface, tet-mesh and ev files (default:off)'
+    h_gsmooth    = 'Geometry smoothing iterations (for surfaces) (default: 0)'
+    h_tsmooth    = 'Tangential smoothing iterations (for surface mesh improvement) (default: 3)'
+    h_do3d       = 'Do 3D tet-meshing and computation (default: off)'
+    h_evec       = 'Switch on eigenvector computation.  This option turns on --keeptmp and cannot be used with --do3d (default: off)'
     
     parser.add_option('--sid',        dest='sid',        help=h_sid)
     parser.add_option('--sdir',       dest='sdir',       help=h_sdir)
@@ -136,14 +130,10 @@ def options_parse():
     parser.add_option('--keeptmp',    dest='keeptmp',    help=h_keeptmp, default=False, action='store_true')
     parser.add_option('--tsmooth',    dest='tsmooth',    help=h_tsmooth, default=3, type='int')   
     parser.add_option('--gsmooth',    dest='gsmooth',    help=h_gsmooth, default=0, type='int')   
-    parser.add_option('--skip3d',     dest='skip3d',     help=h_skip3d,  default=False, action='store_true')
-    parser.add_option('--evec',       dest='evec',       help=h_evec,    default=False, action='store_true')
+    parser.add_option('--do3d',       dest='do3d',       help=h_do3d,  default=False, action='store_true')
+    parser.add_option('--evec',       dest='evec',       help=h_evec,  default=False, action='store_true')
 
     (options, args) = parser.parse_args()
-    #if len(args) == 0:
-    #    parser.print_help()
-    #    print '\n'
-    #    sys.exit(1)
 
     # WITHOUT FREESURFER DO NOTHING
     fshome = os.getenv('FREESURFER_HOME')
@@ -172,12 +162,6 @@ def options_parse():
         print '       setenv SHAPEDNA_HOME /user/me/shapedna/ (cshell)'
         print '       export SHAPEDNA_HOME=/user/me/shapedna/ (bash)\n'
         sys.exit(1)
-        
-    if fs_shapeDNA.which("shapeDNA-tetra") is None and not options.skip3d:
-        print '\nWARNING: Cannot find shapeDNA-tetra in $SHAPEDNA_HOME'
-        print '       Make sure that binary is at $SHAPEDNA_HOME'
-        print '       Switching 3D computation OFF for now (--skip3d)! \n'
-        options.skip3d = True
         
     if options.sdir is None:
         options.sdir = os.getenv('SUBJECTS_DIR')
@@ -209,6 +193,24 @@ def options_parse():
         
     if options.brainprint is None:
         options.brainprint = os.path.join(options.outdir,options.sid+'.brainprint_'+str(options.num)+'.csv')
+
+    if options.do3d:
+        required_executables = ['shapeDNA-tetra', 'meshfix', 'gmsh']
+        for program in required_executables:
+            if fs_shapeDNA.which(program) is None:
+                print '\nERROR: Cannot find ' + program + ' in $SHAPEDNA_HOME'
+                print   '       Make sure that this binary is in $SHAPEDNA_HOME:'
+                print   '       ' + sdnahome
+                print   '       or re-run without the --do3d flag!\n'
+                sys.exit(1)
+
+    if options.evec:
+        if options.do3d:
+            print '\nERROR: Cannot use the --evec option with --do3d'
+            print   '       Re-run without --do3d to turn on eigenvector computations,'
+            print   '       or without --evec to do 3D tet-meshing computations.'
+            sys.exit(1)
+        options.keeptmp = True
     
     return options
 
@@ -295,20 +297,26 @@ def compute_shapeDNAs(options):
     # now we therefore drop Inf.Lat.Vent,ChoroidPlexus,CSF
     # maybe exclude brainstem and ventralDC ?
     # names for table output:
-    structures = ['CorpusCallosum','Cerebellum','Ventricles',
-                  '3rd-Ventricle','4th-Ventricle','Brain-Stem',
-                  'Left-Striatum','Left-Lateral-Ventricle',
-                  'Left-Cerebellum-White-Matter','Left-Cerebellum-Cortex',
-                  'Left-Thalamus-Proper','Left-Caudate','Left-Putamen',
-                  'Left-Pallidum','Left-Hippocampus','Left-Amygdala',
-                  'Left-Accumbens-area','Left-VentralDC',
-                  'Right-Striatum','Right-Lateral-Ventricle',
-                  'Right-Cerebellum-White-Matter','Right-Cerebellum-Cortex',
-                  'Right-Thalamus-Proper','Right-Caudate','Right-Putamen',
-                  'Right-Pallidum','Right-Hippocampus','Right-Amygdala',
-                  'Right-Accumbens-area','Right-VentralDC',
-                  'lh-white-2d','lh-white-3d','lh-pial-2d','lh-pial-3d',
-                  'rh-white-2d','rh-white-3d','rh-pial-2d','rh-pial-3d']
+    structures_2d = ['CorpusCallosum','Cerebellum','Ventricles',
+                     '3rd-Ventricle','4th-Ventricle','Brain-Stem',
+                     'Left-Striatum','Left-Lateral-Ventricle',
+                     'Left-Cerebellum-White-Matter','Left-Cerebellum-Cortex',
+                     'Left-Thalamus-Proper','Left-Caudate','Left-Putamen',
+                     'Left-Pallidum','Left-Hippocampus','Left-Amygdala',
+                     'Left-Accumbens-area','Left-VentralDC',
+                     'Right-Striatum','Right-Lateral-Ventricle',
+                     'Right-Cerebellum-White-Matter','Right-Cerebellum-Cortex',
+                     'Right-Thalamus-Proper','Right-Caudate','Right-Putamen',
+                     'Right-Pallidum','Right-Hippocampus','Right-Amygdala',
+                     'Right-Accumbens-area','Right-VentralDC',
+                     'lh-white-2d','lh-pial-2d', 'rh-white-2d','rh-pial-2d']
+    structures_3d = ['lh-white-3d', 'lh-pial-3d','rh-white-3d','rh-pial-3d']
+   
+    if options.do3d:
+        structures = structures_2d + structures_3d
+    else:
+        structures = structures_2d
+
     # label ids for aseg structures
     labels = [[251, 252, 253, 254, 255], [7, 8, 16, 46, 47], [4, 5, 14, 24, 31, 43, 44, 63],
               [14, 24], 15, 16,
@@ -376,17 +384,16 @@ def compute_shapeDNAs(options):
         #    cmd = cmd+' --outdir '+options.outdir
         #run_cmd(cmd,'fs_shapeDNA.py '+lstring+' failed?')
 
-    # Surfaces (both 2D and 3D tet):
+    # 2D Surfaces:
+    
     for hem in ['lh','rh']:
         for typeSurf in ['white', 'pial']:
             surfname = hem+'.'+typeSurf
             insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
             outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
             outev2d  = os.path.join(options.outdir,surfname+'.ev')
-            outtet   = os.path.join(options.outdir,surfname+'.msh')
-            outev3d  = os.path.join(options.outdir,surfname+'.msh.ev')
-
             failed = False
+
             try:
                 fs_shapeDNA.run_shapeDNAtria(insurf,outev2d,outsurf,sdnaopt)
                 evs = get_evals(outev2d)
@@ -402,32 +409,21 @@ def compute_shapeDNAs(options):
                 run_cmd(cmd,'rm temp outev2d failed?')
                 cmd ='rm '+outsurf
                 run_cmd(cmd,'rm temp outsurf failed?')
-            
-            if options.skip3d:
-                print 'Skipping 3D meshing and computation'
-                continue
 
-            if fs_shapeDNA.which('meshfix') is None or fs_shapeDNA.which('gmsh') is None or fs_shapeDNA.which('shapeDNA-tetra') is None:
-                print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-                print '!!! Skipping 3D computations due to missing executables (meshfix, gmsh or shapeDNA-tetra) !!!'
-                print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-                continue
-            # try with 3 mesh fix iterations:    
-            failed = False
-            try:
-                fixiter = 3
-                fs_shapeDNA.get_tetmesh(insurf,outtet,fixiter)
-                fs_shapeDNA.run_shapeDNAtetra(outtet,outev3d,sdnaopt)
-                evs = get_evals(outev3d)
-            except subprocess.CalledProcessError as e:
-                print 'Error occured, skipping 3D surface '+surfname
-                failed = True
+    # Surfaces: 3D tet
+    if options.do3d:
+        for hem in ['lh','rh']:
+            for typeSurf in ['white', 'pial']:
+                surfname = hem+'.'+typeSurf
+                insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
+                outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
+                outev3d  = os.path.join(options.outdir,surfname+'.msh.ev')
+                outtet   = os.path.join(options.outdir,surfname+'.msh')
 
-            # if failed, try with 4 mesh fix iterations:    
-            if not evs or failed:
+                # try with 3 mesh fix iterations:    
                 failed = False
                 try:
-                    fixiter = 4
+                    fixiter = 3
                     fs_shapeDNA.get_tetmesh(insurf,outtet,fixiter)
                     fs_shapeDNA.run_shapeDNAtetra(outtet,outev3d,sdnaopt)
                     evs = get_evals(outev3d)
@@ -435,26 +431,39 @@ def compute_shapeDNAs(options):
                     print 'Error occured, skipping 3D surface '+surfname
                     failed = True
 
-            if not evs or failed:
-                evs = ['NaN'] * (sdnaopt.num+2)
-            evmat.append(evs)
-            if not options.keeptmp and not failed:
-                cmd ='rm '+outev3d
-                run_cmd(cmd,'rm temp outev3d failed?')
-                cmd ='rm '+outtet
-                run_cmd(cmd,'rm temp outtet failed?')
-                    
-            #cmd = 'fs_shapeDNA.py --sid '+options.sid+' --sdir '+options.sdir+' --surf '+surfname+' --num '+options.num
-            #if options.outdir is not None:
-            #    cmd = cmd+' --outdir '+options.outdir
-            #run_cmd(cmd,'fs_shapeDNA.py --surf '+sstring+' failed?')
-            #sstring=hem+'.'+typeSurf
-            #cmd = 'fs_shapeDNA.py --sid '+options.sid+' --sdir '+options.sdir+' --surf '+surfname+' --num '+options.num+' --dotet'
-            #if options.outdir is not None:
-            #    cmd = cmd+' --outdir '+options.outdir
-            #run_cmd(cmd,'fs_shapeDNA.py --dotet --surf '+sstring+' failed?')
+                # if failed, try with 4 mesh fix iterations:    
+                if not evs or failed:
+                    failed = False
+                    try:
+                        fixiter = 4
+                        fs_shapeDNA.get_tetmesh(insurf,outtet,fixiter)
+                        fs_shapeDNA.run_shapeDNAtetra(outtet,outev3d,sdnaopt)
+                        evs = get_evals(outev3d)
+                    except subprocess.CalledProcessError as e:
+                        print 'Error occured, skipping 3D surface '+surfname
+                        failed = True
+
+                if not evs or failed:
+                    evs = ['NaN'] * (sdnaopt.num+2)
+                evmat.append(evs)
+                if not options.keeptmp and not failed:
+                    cmd ='rm '+outev3d
+                    run_cmd(cmd,'rm temp outev3d failed?')
+                    cmd ='rm '+outtet
+                    run_cmd(cmd,'rm temp outtet failed?')
+                
+        #cmd = 'fs_shapeDNA.py --sid '+options.sid+' --sdir '+options.sdir+' --surf '+surfname+' --num '+options.num
+        #if options.outdir is not None:
+        #    cmd = cmd+' --outdir '+options.outdir
+        #run_cmd(cmd,'fs_shapeDNA.py --surf '+sstring+' failed?')
+        #sstring=hem+'.'+typeSurf
+        #cmd = 'fs_shapeDNA.py --sid '+options.sid+' --sdir '+options.sdir+' --surf '+surfname+' --num '+options.num+' --dotet'
+        #if options.outdir is not None:
+        #    cmd = cmd+' --outdir '+options.outdir
+        #run_cmd(cmd,'fs_shapeDNA.py --dotet --surf '+sstring+' failed?')
 
     return (structures, evmat)
+
 
 
 def write_evs(outfile,structures,evmat):
