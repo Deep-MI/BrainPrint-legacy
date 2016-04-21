@@ -198,7 +198,7 @@ def options_parse():
         required_executables = ['shapeDNA-tetra', 'meshfix', 'gmsh']
         for program in required_executables:
             if fs_shapeDNA.which(program) is None:
-                print '\nERROR: Cannot find ' + program + 'in $SHAPEDNA_HOME'
+                print '\nERROR: Cannot find ' + program + ' in $SHAPEDNA_HOME'
                 print   '       Make sure that this binary is in $SHAPEDNA_HOME:'
                 print   '       ' + sdnahome
                 print   '       or re-run without the --do3d flag!\n'
