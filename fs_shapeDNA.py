@@ -371,7 +371,7 @@ def run_cmd(cmd,err_msg):
     clist = cmd.split()
     progname=which(clist[0])
     if (progname) is None:
-        print 'ERROR: '+progname+' not found in path!'
+        print 'ERROR: '+ clist[0] +' not found in path!'
         sys.exit(1)
     clist[0]=progname
     cmd = ' '.join(clist)
