@@ -66,22 +66,40 @@ Right-Accumbens-area            58
 Right-VentralDC                 60
 
 And the following cortical structures:
-lh-white-2d    (left white matter surface triangles)
-lh-white-3d    (left white matter volume tetrahedra)
-lh-pial-2d     (left pial surface triangles)
-lh-pial-3d     (left pial+white volume tetrahedra)
-rh-white-2d    (same for right hemisphere ...)
-rh-white-3d
-rh-pial-2d
-rh-pial-3d
 
-Note, the 3d (tetrahedra) descriptors are only computed if the 
-necessary software (meshfix, gmsh and shapeDNA-tetra) are
-available in the $SHAPEDNA_HOME path. As a minimum the file
-shapeDNA-tria and the key.txt file need to exist and the 
-environment variable $SHAPEDNA_HOME needs to point to that
-directory. The key file and shapeDNA-tria can be obtained
-from http://reuter.mit.edu/software/shapedna/
+lh-white-2d    (left white matter surface triangles)
+lh-pial-2d     (left pial surface triangles)
+rh-white-2d    (same for right hemisphere ...)
+rh-pial-2d
+
+lh-white-3d    (left white matter volume tetrahedra)
+lh-pial-3d     (left pial+white volume tetrahedra)
+rh-pial-3d
+rh-white-3d
+
+Processing of the cortical structures can be skipped (--skipcortex).
+The 3d (tetrahedra) descriptors are only computed if --do3d
+is passed and the necessary software (meshfix, gmsh and
+shapeDNA-tetra) are available in the $SHAPEDNA_HOME path.
+For regular processing the file shapeDNA-tria and the key.txt
+file need to exist and the  environment variable $SHAPEDNA_HOME
+needs to point to that directory. The key file and shapeDNA-tria
+can be obtained from http://reuter.mit.edu/software/shapedna/
+Regular (2d) processing takes approx. 5 mins per subject, adding
+3d processing (--do3d) adds 30 mins.
+
+Implicit Inputs:
+The mri/aseg.mgz and mri/norm.mgz should be available.
+Also surf/?h.pial and surf/?h.white need to be
+available unless --skipcortex is passed. norm.mgz is not 
+absolutely necessary but highly recommended to fix the labels
+and obtain improved meshes. 
+
+Output:
+The brainprint CSV table containing column headers for the 
+structures, a row of areas, a row of volumes and N rows of 
+the first N eigenvalues for each structure.
+
 
 If used for a publication, please cite both [1] for the shape
 descriptor method and [2] for the application to brain MRI and
@@ -114,7 +132,7 @@ def options_parse():
     h_sid        = '(REQUIRED) subject ID (FS processed directory inside the subjects directory)'
     h_sdir       = 'FS subjects directory (or set environment $SUBJECTS_DIR)'
     h_num        = 'Number of eigenvalues/vectors to compute (default: 50)'
-    h_outdir     = 'Output directory (default: <sdir>/<sid>/surf )'
+    h_outdir     = 'Output directory (default: <sdir>/<sid>/brainprint/ )'
     h_brainprint = 'Output BrainPrint file (default: <outdir>/<sid>.brainprint_<num>.csv )'
     h_keeptmp    = 'Keep intermediate surface, tet-mesh and ev files (default:off)'
     h_gsmooth    = 'Geometry smoothing iterations (for surfaces) (default: 0)'
