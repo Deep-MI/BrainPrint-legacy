@@ -374,6 +374,10 @@ def compute_shapeDNAs(options):
             astring  = '_'.join(str(x) for x in lab)
         else:
             astring = str(lab)
+        
+        print "\n\n==========================================================="
+        print "Aseg label id str ".astring."\n"
+        
         surfnamei = 'aseg.init.'+astring+'.vtk'
         asegsurfi  = os.path.join(options.outdir,surfnamei)
         surfnameo = 'aseg.final.'+astring+'.vtk'
@@ -416,6 +420,8 @@ def compute_shapeDNAs(options):
     for hem in ['lh','rh']:
         for typeSurf in ['white', 'pial']:
             surfname = hem+'.'+typeSurf
+            print "\n\n==========================================================="
+            print "2D Cortical Surface ".surfname."\n"
             insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
             outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
             outev2d  = os.path.join(options.outdir,surfname+'.ev')
@@ -442,6 +448,8 @@ def compute_shapeDNAs(options):
         for hem in ['lh','rh']:
             for typeSurf in ['white', 'pial']:
                 surfname = hem+'.'+typeSurf
+                print "\n\n==========================================================="
+                print "3D Cortical Structure ".surfname."\n"
                 insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
                 outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
                 outev3d  = os.path.join(options.outdir,surfname+'.msh.ev')
