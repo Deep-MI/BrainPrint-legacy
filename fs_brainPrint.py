@@ -278,6 +278,8 @@ def get_evals(evfile):
                 evstr = evstr+evline
                 evstr = evstr.translate(None,'{} \n')
                 evals = evstr.split(';')
+                if float(evals[0]) < 10e-16 :
+                    evals[0] = "0"
                 evals.insert(0,volume)
                 evals.insert(0,area)
                 return evals
