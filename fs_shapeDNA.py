@@ -438,11 +438,12 @@ def get_aseg_surf(sdir,sid,asegid,outsurf):
     # binarize on selected labels (creates temp segf)
     ptinput = aseg
     ptlabel = str(asegid[0])
-    if len(asegid) > 1:
-        cmd ='mri_binarize --i '+aseg+' --match '+astring2+' --o '+segf
-        run_cmd(cmd,'mri_binarize failed.') 
-        ptinput = segf
-        ptlabel = '1'
+    #if len(asegid) > 1:
+    # always binarize first, otherwise pretess may scale aseg if labels are larger than 255 (e.g. aseg+aparc, bug in mri_pretess?)
+    cmd ='mri_binarize --i '+aseg+' --match '+astring2+' --o '+segf
+    run_cmd(cmd,'mri_binarize failed.') 
+    ptinput = segf
+    ptlabel = '1'
     # if norm exist, fix label (pretess)
     if os.path.isfile(norm):
         cmd ='mri_pretess '+ptinput+' '+ptlabel+' '+norm+' '+segf
