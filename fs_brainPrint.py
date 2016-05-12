@@ -103,7 +103,7 @@ absolutely necessary but highly recommended to fix the labels
 and obtain improved meshes. 
 
 Output:
-The brainprint(CSV table containing column headers for the )
+The brainprint CSV table containing column headers for the 
 structures, a row of areas, a row of volumes and N rows of 
 the first N eigenvalues for each structure.
 
@@ -251,15 +251,12 @@ def run_cmd(cmd,err_msg):
     execute the comand
     """
     my_print('#@# Command: ' + cmd+'\n')
-    sys.stdout.flush()
     args = shlex.split(cmd)
     retcode = subprocess.call(args)
     if retcode != 0 :
         my_print('ERROR: '+err_msg)
-        sys.stdout.flush()
         sys.exit(1)
     my_print('\n')
-    sys.stdout.flush()
 
 
 def get_evals(evfile):
