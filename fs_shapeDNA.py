@@ -23,6 +23,13 @@ import errno
 warnings.filterwarnings('ignore', '.*negative int.*')
 os.environ['OMP_NUM_THREADS'] = '1' # setenv OMP_NUM_THREADS 1
 
+def my_print(message):
+    """
+    print message, then flush stdout
+    """
+    print message
+    sys.stdout.flush()
+
 HELPTEXT = """
 
 SUMMARY
@@ -201,35 +208,35 @@ def options_parse():
     (options, args) = parser.parse_args()
     #if len(args) == 0:
     #    parser.print_help()
-    #    print '\n'
+    #    my_print('\n')
     #    sys.exit(1)
                 
     # WITHOUT FREESURFER DO NOTHING
     fshome = os.getenv('FREESURFER_HOME')
     if fshome is None:
         parser.print_help()
-        print '\nERROR: Environment variable FREESURFER_HOME not set. \n'
-        print '       Make sure to source your FreeSurfer installation.\n'
+        my_print('\nERROR: Environment variable FREESURFER_HOME not set. \n')
+        my_print('       Make sure to source your FreeSurfer installation.\n')
         sys.exit(1)
 
     sdnahome = os.getenv('SHAPEDNA_HOME')
     if sdnahome is None:
         parser.print_help()
-        print '\nERROR: Environment variable SHAPEDNA_HOME not set.\n'
-        print '       Set SHAPEDNA_HOME to point to the shapeDNA-tria installation.\n'
+        my_print('\nERROR: Environment variable SHAPEDNA_HOME not set.\n')
+        my_print('       Set SHAPEDNA_HOME to point to the shapeDNA-tria installation.\n')
         sys.exit(1)
 
     sdna = os.path.join(sdnahome,"shapeDNA-tria")
     if not os.path.exists(sdna) and not options.dotet:
         parser.print_help()
-        print '\nERROR: Cannot find shapeDNA-tria\n'
-        print '       Make sure that binary is at $SHAPEDNA_HOME \n'
+        my_print('\nERROR: Cannot find shapeDNA-tria\n')
+        my_print('       Make sure that binary is at $SHAPEDNA_HOME \n')
         sys.exit(1)
 
     if which("shapeDNA-tetra") is None and options.dotet:
         parser.print_help()
-        print '\nERROR: Cannot find shapeDNA-tetra\n'
-        print '       Make sure that binary is at $SHAPEDNA_HOME \n'
+        my_print('\nERROR: Cannot find shapeDNA-tetra\n')
+        my_print('       Make sure that binary is at $SHAPEDNA_HOME \n')
         sys.exit(1)
 
     if options.sdir is None:
@@ -237,36 +244,36 @@ def options_parse():
 
     if options.sdir is None:
         parser.print_help()
-        print '\nERROR: specify subjects directory via --sdir or $SUBJECTS_DIR\n'
+        my_print('\nERROR: specify subjects directory via --sdir or $SUBJECTS_DIR\n')
         sys.exit(1)
         
     if options.sid is None:
         parser.print_help()
-        print '\nERROR: Specify --sid\n'
+        my_print('\nERROR: Specify --sid\n')
         sys.exit(1)
             
     subjdir = os.path.join(options.sdir,options.sid)
     if not os.path.exists(subjdir):
-        print 'ERROR: cannot find sid in subjects directory\n'
+        my_print('ERROR: cannot find sid in subjects directory\n')
         sys.exit(1)
     
     if options.label is not None and options.surf is None:
         parser.print_help()
-        print '\nERROR: Specify --surf with --label\n'
+        my_print('\nERROR: Specify --surf with --label\n')
         sys.exit(1)  
     if options.aparcid is not None and options.surf is None:
         parser.print_help()
-        print '\nERROR: Specify --surf with --aparc\n'
+        my_print('\nERROR: Specify --surf with --aparc\n')
         sys.exit(1)  
     # input needs to be either a surf or aseg label(s)
     if options.asegid is None and options.surf is None:
         parser.print_help()
-        print '\nERROR: Specify either --asegid or --surf\n'
+        my_print('\nERROR: Specify either --asegid or --surf\n')
         sys.exit(1)
     # and it cannot be both
     if options.asegid is not None and options.surf is not None:
         parser.print_help()
-        print '\nERROR: Specify either --asegid or --surf (not both)\n'
+        my_print('\nERROR: Specify either --asegid or --surf (not both)\n')
         sys.exit(1)  
     
     # set default output dir (maybe this should be ./ ??)
@@ -287,7 +294,7 @@ def options_parse():
         if e.errno != errno.EACCES:  # 13
             e.filename = options.outdir
             raise
-        print '\nERROR: '+options.outdir+' not writeable (check access)!\n'
+        my_print('\nERROR: '+options.outdir+' not writeable (check access)!\n')
         sys.exit(1)
     
     # initialize outsurf
@@ -312,7 +319,7 @@ def options_parse():
     else:
         # make sure it is vtk ending
         if (os.path.splitext(options.outsurf)[1]).upper() != '.VTK':
-            print 'ERROR: outsurf needs vtk extension (VTK format)'
+            my_print('ERROR: outsurf needs vtk extension (VTK format)')
             sys.exit(1)
     
     # for 3d processing, initialize outtet:
@@ -331,7 +338,7 @@ def options_parse():
             options.label = ltemp
         else:
             parser.print_help()
-            print '\nERROR: Specified --label not found\n'
+            my_print('\nERROR: Specified --label not found\n')
             sys.exit(1)  
                 
     # initialize outev 
@@ -371,20 +378,20 @@ def run_cmd(cmd,err_msg):
     clist = cmd.split()
     progname=which(clist[0])
     if (progname) is None:
-        print 'ERROR: '+ clist[0] +' not found in path!'
+        my_print('ERROR: '+ clist[0] +' not found in path!')
         sys.exit(1)
     clist[0]=progname
     cmd = ' '.join(clist)
-    print cmd+'\n'
+    my_print('#@# Command: ' + cmd+'\n')
 
     args = shlex.split(cmd)
     try:
         subprocess.check_call(args)
     except subprocess.CalledProcessError as e:
-        print 'ERROR: '+err_msg
+        my_print('ERROR: '+err_msg)
         #sys.exit(1)
         raise
-    print '\n'
+    my_print('\n')
 
 # Gets global path to surface input (if it is a FS surf)
 def get_surf_surf(sdir,sid,surf):
@@ -607,8 +614,8 @@ if __name__=="__main__":
     # Command Line options and error checking done here
     options = options_parse()
 
-    print options.label
-    print options.surf
+    my_print(options.label)
+    my_print(options.surf)
 
     if options.asegid is not None:
         surf = get_aseg_surf(options.sdir,options.sid,options.asegid,options.outsurf)
@@ -622,10 +629,10 @@ if __name__=="__main__":
     elif options.surf is not None:
         surf = get_surf_surf(options.sdir,options.sid,options.surf)
         outsurf = options.outsurf
-    #print surf
+    #my_print(surf)
     #sys.exit(0)
     if surf is None:
-        print 'ERROR: no surface was created/selected?'
+        my_print('ERROR: no surface was created/selected?')
         sys.exit(1)
 
     if options.dotet:

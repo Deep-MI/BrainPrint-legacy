@@ -20,6 +20,13 @@ import fs_shapeDNA
 
 warnings.filterwarnings('ignore', '.*negative int.*')
 
+def my_print(message):
+    """
+    print message, then flush stdout
+    """
+    print message 
+    sys.stdout.flush()
+
 HELPTEXT = """
 
 fs_brainprint.py V2.0
@@ -159,28 +166,28 @@ def options_parse():
     fshome = os.getenv('FREESURFER_HOME')
     if fshome is None:
         parser.print_help()
-        print '\nERROR: Environment variable FREESURFER_HOME not set.'
-        print '        You need to source FreeSurfer 5.3 or newer.\n'
+        my_print('\nERROR: Environment variable FREESURFER_HOME not set.')
+        my_print('        You need to source FreeSurfer 5.3 or newer.\n')
         sys.exit(1)
 
     sdnahome = os.getenv('SHAPEDNA_HOME')
     if sdnahome is None:
         parser.print_help()
-        print '\nERROR: Environment variable SHAPEDNA_HOME not set.'
-        print '       Set that variable to point to the directory containing'
-        print '       shapeDNA-tria, e.g.'
-        print '       setenv SHAPEDNA_HOME /user/me/shapedna/ (cshell)'
-        print '       export SHAPEDNA_HOME=/user/me/shapedna/ (bash)\n'
+        my_print('\nERROR: Environment variable SHAPEDNA_HOME not set.')
+        my_print('       Set that variable to point to the directory containing')
+        my_print('       shapeDNA-tria, e.g.')
+        my_print('       setenv SHAPEDNA_HOME /user/me/shapedna/ (cshell)')
+        my_print('       export SHAPEDNA_HOME=/user/me/shapedna/ (bash)\n')
         sys.exit(1)
 
     sdna = os.path.join(sdnahome,"shapeDNA-tria")
     if not os.path.exists(sdna):
         parser.print_help()
-        print '\nERROR: Cannot find shapeDNA-tria in $SHAPEDNA_HOME\n'
-        print '       Set that variable to point to the directory containing'
-        print '       shapeDNA-tria, e.g.'
-        print '       setenv SHAPEDNA_HOME /user/me/shapedna/ (cshell)'
-        print '       export SHAPEDNA_HOME=/user/me/shapedna/ (bash)\n'
+        my_print('\nERROR: Cannot find shapeDNA-tria in $SHAPEDNA_HOME\n')
+        my_print('       Set that variable to point to the directory containing')
+        my_print('       shapeDNA-tria, e.g.')
+        my_print('       setenv SHAPEDNA_HOME /user/me/shapedna/ (cshell)')
+        my_print('       export SHAPEDNA_HOME=/user/me/shapedna/ (bash)\n')
         sys.exit(1)
         
     if options.sdir is None:
@@ -188,18 +195,18 @@ def options_parse():
 
     if options.sdir is None:
         parser.print_help()
-        print '\nERROR: specify subjects directory via --sdir or $SUBJECTS_DIR\n'
+        my_print('\nERROR: specify subjects directory via --sdir or $SUBJECTS_DIR\n')
         sys.exit(1)
         
     if options.sid is None:
         parser.print_help()
-        print '\nERROR: Specify --sid\n'
+        my_print('\nERROR: Specify --sid\n')
         sys.exit(1)
             
     subjdir = os.path.join(options.sdir,options.sid)
     if not os.path.exists(subjdir):
         parser.print_help()
-        print '\nERROR: cannot find sid in subjects directory\n'
+        my_print('\nERROR: cannot find sid in subjects directory\n')
         sys.exit(1)
     
     if options.outdir is None:
@@ -218,20 +225,20 @@ def options_parse():
         required_executables = ['shapeDNA-tetra', 'meshfix', 'gmsh']
         for program in required_executables:
             if fs_shapeDNA.which(program) is None:
-                print '\nERROR: Cannot find ' + program + ' in $SHAPEDNA_HOME'
-                print   '       Make sure that this binary is in $SHAPEDNA_HOME:'
-                print   '       ' + sdnahome
-                print   '       or re-run without the --do3d flag!\n'
+                my_print('\nERROR: Cannot find ' + program + ' in $SHAPEDNA_HOME')
+                my_print(  '       Make sure that this binary is in $SHAPEDNA_HOME:')
+                my_print(  '       ' + sdnahome)
+                my_print(  '       or re-run without the --do3d flag!\n')
                 sys.exit(1)
         if options.skipcortex:
-            print '\nERROR: cannot combine --do3d and --skipcortex\n'
+            my_print('\nERROR: cannot combine --do3d and --skipcortex\n')
             sys.exit(1)
 
     if options.evec:
         if options.do3d:
-            print '\nERROR: Cannot use the --evec option with --do3d'
-            print   '       Re-run without --do3d to turn on eigenvector computations,'
-            print   '       or without --evec to do 3D tet-meshing computations.'
+            my_print('\nERROR: Cannot use the --evec option with --do3d')
+            my_print(  '       Re-run without --do3d to turn on eigenvector computations,')
+            my_print(  '       or without --evec to do 3D tet-meshing computations.')
             sys.exit(1)
         options.keeptmp = True
     
@@ -243,13 +250,13 @@ def run_cmd(cmd,err_msg):
     """
     execute the comand
     """
-    print cmd+'\n'
+    my_print('#@# Command: ' + cmd+'\n')
     args = shlex.split(cmd)
     retcode = subprocess.call(args)
     if retcode != 0 :
-        print 'ERROR: '+err_msg
+        my_print('ERROR: '+err_msg)
         sys.exit(1)
-    print '\n'
+    my_print('\n')
 
 
 def get_evals(evfile):
@@ -377,8 +384,8 @@ def compute_shapeDNAs(options):
         else:
             astring = str(lab)
         
-        print "\n\n==========================================================="
-        print "Aseg label id str "+astring+"\n"
+        my_print("\n\n===========================================================")
+        my_print("Aseg label id str "+astring+"\n")
         
         surfnamei = 'aseg.init.'+astring+'.vtk'
         asegsurfi  = os.path.join(options.outdir,surfnamei)
@@ -392,7 +399,7 @@ def compute_shapeDNAs(options):
             fs_shapeDNA.run_shapeDNAtria(asegsurfi,outev,asegsurfo,sdnaopt)
             evs = get_evals(outev)
         except subprocess.CalledProcessError as e:
-            print 'Error occured, skipping label '+astring
+            my_print('Error occured, skipping label '+astring)
             failed = True
             
         if not evs or failed:
@@ -422,8 +429,8 @@ def compute_shapeDNAs(options):
     for hem in ['lh','rh']:
         for typeSurf in ['white', 'pial']:
             surfname = hem+'.'+typeSurf
-            print "\n\n==========================================================="
-            print "2D Cortical Surface "+surfname+"\n"
+            my_print("\n\n===========================================================")
+            my_print("2D Cortical Surface "+surfname+"\n")
             insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
             outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
             outev2d  = os.path.join(options.outdir,surfname+'.ev')
@@ -433,7 +440,7 @@ def compute_shapeDNAs(options):
                 fs_shapeDNA.run_shapeDNAtria(insurf,outev2d,outsurf,sdnaopt)
                 evs = get_evals(outev2d)
             except subprocess.CalledProcessError as e:
-                print 'Error occured, skipping 2D surface '+surfname
+                my_print('Error occured, skipping 2D surface '+surfname)
                 failed = True
 
             if not evs or failed:
@@ -450,8 +457,8 @@ def compute_shapeDNAs(options):
         for hem in ['lh','rh']:
             for typeSurf in ['white', 'pial']:
                 surfname = hem+'.'+typeSurf
-                print "\n\n==========================================================="
-                print "3D Cortical Structure "+surfname+"\n"
+                my_print("\n\n===========================================================")
+                my_print("3D Cortical Structure "+surfname+"\n")
                 insurf   = os.path.join(options.sdir,options.sid,'surf',surfname)
                 outsurf  = os.path.join(options.outdir,surfname+'.final.vtk')
                 outev3d  = os.path.join(options.outdir,surfname+'.msh.ev')
@@ -465,7 +472,7 @@ def compute_shapeDNAs(options):
                     fs_shapeDNA.run_shapeDNAtetra(outtet,outev3d,sdnaopt)
                     evs = get_evals(outev3d)
                 except subprocess.CalledProcessError as e:
-                    print 'Error occured, skipping 3D surface '+surfname
+                    my_print('Error occured, skipping 3D surface '+surfname)
                     failed = True
 
                 # if failed, try with 4 mesh fix iterations:    
@@ -477,7 +484,7 @@ def compute_shapeDNAs(options):
                         fs_shapeDNA.run_shapeDNAtetra(outtet,outev3d,sdnaopt)
                         evs = get_evals(outev3d)
                     except subprocess.CalledProcessError as e:
-                        print 'Error occured, skipping 3D surface '+surfname
+                        my_print('Error occured, skipping 3D surface '+surfname)
                         failed = True
 
                 if not evs or failed:
