@@ -244,12 +244,15 @@ def run_cmd(cmd,err_msg):
     execute the comand
     """
     print cmd+'\n'
+    sys.stdout.flush()
     args = shlex.split(cmd)
     retcode = subprocess.call(args)
     if retcode != 0 :
         print 'ERROR: '+err_msg
+        sys.stdout.flush()
         sys.exit(1)
     print '\n'
+    sys.stdout.flush()
 
 
 def get_evals(evfile):

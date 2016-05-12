@@ -372,19 +372,23 @@ def run_cmd(cmd,err_msg):
     progname=which(clist[0])
     if (progname) is None:
         print 'ERROR: '+ clist[0] +' not found in path!'
+        sys.stdout.flush()
         sys.exit(1)
     clist[0]=progname
     cmd = ' '.join(clist)
     print cmd+'\n'
+    sys.stdout.flush()
 
     args = shlex.split(cmd)
     try:
         subprocess.check_call(args)
     except subprocess.CalledProcessError as e:
         print 'ERROR: '+err_msg
+        sys.stdout.flush()
         #sys.exit(1)
         raise
     print '\n'
+    sys.stdout.flush()
 
 # Gets global path to surface input (if it is a FS surf)
 def get_surf_surf(sdir,sid,surf):
