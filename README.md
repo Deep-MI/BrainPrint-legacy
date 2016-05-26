@@ -3,7 +3,7 @@ BrainPrint
 
 BrainPrint represents a set of shape descriptors of a collection of subcortical and cortical structures.
 
-Dependencies:
+## Dependencies:
 - FreeSurfer (MRI data needs to be processed with Freesurfer 5.3 or newer): http://freesurfer.net
 - ShapeDNA-tria (to perform the shape analysis): http://reuter.mit.edu/software/shapedna
 
@@ -13,6 +13,8 @@ To also compute shape descriptors of 3D tetrahedra meshes, you additionally need
 - shapeDNA-tetra (currently unavailable, contact author http://reuter.mit.edu/software/shapedna )
 These are not required for the software to work, and only add 4 more descriptors for white and pial volumes (each hemisphere).
 
+## Installation:
+Set the environment variable $SHAPEDNA_HOME to the directory containing shapeDNA-tria. If you want to perform also 3D tetra processing, also copy gmsh, meshfix and shapeDNA-tetra to that directory. Source your FreeSurfer (5.3 or newer) and you are ready to go. 
 
 ## Reference:
 
