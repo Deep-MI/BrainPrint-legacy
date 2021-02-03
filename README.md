@@ -2,10 +2,15 @@ BrainPrint
 ==========
 
 BrainPrint represents a set of shape descriptors of a collection of subcortical and cortical structures.
+Note, that we moved most of this functionality to a pure python package:
+https://github.com/Deep-MI/BrainPrint-python 
+The new package drops the shapeDNA-* and meshfix, Gmsh dependencies. It therefore lacks support for 3D tetmeshes, 
+as well as support for additional cortical regions and labels, which is why we will keep this package around
+as a legacy version. 
 
 ## Dependencies:
 - FreeSurfer (MRI data needs to be processed with Freesurfer 5.3 or newer): http://freesurfer.net
-- ShapeDNA-tria (to perform the shape analysis): http://reuter.mit.edu/software/shapedna
+- shapeDNA-tria (to perform the shape analysis): http://reuter.mit.edu/software/shapedna
 
 To also compute shape descriptors of 3D tetrahedra meshes, you additionally need:
 - meshfix  1.2-alpha: https://code.google.com/p/meshfix/
