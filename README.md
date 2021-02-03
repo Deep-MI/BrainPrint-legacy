@@ -1,5 +1,5 @@
-BrainPrint
-==========
+BrainPrint-legacy
+=================
 
 BrainPrint represents a set of shape descriptors of a collection of subcortical and cortical structures.
 Note, that we moved most of this functionality to a pure python package:
