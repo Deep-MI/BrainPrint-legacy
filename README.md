@@ -4,7 +4,8 @@ BrainPrint
 BrainPrint represents a set of shape descriptors of a collection of subcortical and cortical structures.
 Note, that we moved most of this functionality to a pure python package:
 https://github.com/Deep-MI/BrainPrint-python 
-The new package drops the shapeDNA-* and meshfix, Gmsh dependencies. It therefore lacks support for 3D tetmeshes, 
+The new package drops the shapeDNA-* and meshfix, Gmsh dependencies. ShapeDNA-tria functionality has mainly been replaced via our LaPy packages https://github.com/Deep-MI/LaPy
+The new python version, however, currently lacks support for 3D tetmeshes, 
 as well as support for additional cortical regions and labels, which is why we will keep this package around
 as a legacy version. 
 
